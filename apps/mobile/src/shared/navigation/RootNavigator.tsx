@@ -18,6 +18,7 @@ import { GamesScreen } from '@features/games/GamesScreen';
 import PlaypalsScreen from '@features/profile/screens/PlaypalsScreen';
 import GroupsScreen from '@features/profile/screens/GroupsScreen';
 import EditProfileScreen from '@features/profile/screens/EditProfileScreen';
+import { ShopHomeScreen, ProductDetailScreen, CartScreen, CheckoutScreen, OrderSuccessScreen, OrderDetailScreen, OrdersScreen } from '@features/shop/ShopScreens';
 import { ManageVenuesScreen, CreateVenueScreen, ManageVenueSlotsScreen, VenueDetailScreen } from '@features/venues';
 import { UserRole } from '@playmate/types';
 import type {
@@ -121,23 +122,24 @@ function ShopNavigator() {
   return (
     <ShopStack.Navigator screenOptions={opts}>
       <ShopStack.Screen name="ShopHome" options={{ title: 'Shop' }}>
-        {() => <Placeholder title="Shop Home" />}
+        {() => <ShopHomeScreen />}
       </ShopStack.Screen>
       <ShopStack.Screen name="ProductDetail" options={{ title: 'Product' }}>
-        {() => <Placeholder title="Product Detail" />}
+        {() => <ProductDetailScreen />}
       </ShopStack.Screen>
       <ShopStack.Screen name="Cart" options={{ title: 'Cart' }}>
-        {() => <Placeholder title="Cart" />}
+        {() => <CartScreen />}
       </ShopStack.Screen>
       <ShopStack.Screen name="Checkout" options={{ title: 'Checkout' }}>
-        {() => <Placeholder title="Checkout" />}
+        {() => <CheckoutScreen />}
       </ShopStack.Screen>
       <ShopStack.Screen name="OrderSuccess" options={{ title: 'Order Placed', headerBackVisible: false }}>
-        {() => <Placeholder title="Order Success" />}
+        {() => <OrderSuccessScreen />}
       </ShopStack.Screen>
       <ShopStack.Screen name="OrderDetail" options={{ title: 'Order' }}>
-        {() => <Placeholder title="Order Detail" />}
+        {() => <OrderDetailScreen />}
       </ShopStack.Screen>
+      <ShopStack.Screen name="Orders" options={{ title: 'My Orders' }}>{() => <OrdersScreen />}</ShopStack.Screen>
     </ShopStack.Navigator>
   );
 }
@@ -163,7 +165,7 @@ function ProfileNavigator() {
       <ProfileStack.Screen name="ProfileHome" component={ProfileScreen} options={{ title: 'Profile' }} />
       <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Edit Profile' }} />
       <ProfileStack.Screen name="Orders" options={{ title: 'My Orders' }}>
-        {() => <Placeholder title="Orders" />}
+        {() => <OrdersScreen />}
       </ProfileStack.Screen>
       <ProfileStack.Screen name="Addresses" options={{ title: 'Addresses' }}>
         {() => <Placeholder title="Addresses" />}

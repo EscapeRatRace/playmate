@@ -5,6 +5,12 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#062f2a"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -14,6 +20,11 @@
     },
     "android": {
       "package": "com.playmate.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#062f2a"
+      },
       "permissions": []
     },
     "web": {

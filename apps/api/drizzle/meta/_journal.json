@@ -14,6 +14,7 @@
     { "idx": 9, "version": "7", "when": 1794528000000, "tag": "0009_multi_slot_bookings", "breakpoints": true },
     { "idx": 10, "version": "7", "when": 1794614400000, "tag": "0010_cancellation_policy_refunds", "breakpoints": true },
     { "idx": 11, "version": "7", "when": 1794700800000, "tag": "0011_venue_favorites", "breakpoints": true },
-    { "idx": 12, "version": "7", "when": 1794787200000, "tag": "0012_player_profile_compatibility", "breakpoints": true }
+    { "idx": 12, "version": "7", "when": 1794787200000, "tag": "0012_player_profile_compatibility", "breakpoints": true },
+    { "idx": 13, "version": "7", "when": 1794873600000, "tag": "0013_community_terms_acceptance", "breakpoints": true }
   ]
 }

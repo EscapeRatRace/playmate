@@ -63,6 +63,22 @@ export class UsersController {
     return { success: true, data: await this.usersService.updateMyProfile(req.user.id, legacyProfileSchema.parse(body)) };
   }
 
+  @Post("me/community-consent")
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Accept the current Playmate community guidelines" })
+  async acceptCommunityTerms(@Req() req: any, @Body() body: unknown) {
+    const parsed = z.object({ accepted: z.literal(true) }).strict().parse(body);
+    return { success: true, data: await this.usersService.acceptCommunityTerms(req.user.id, parsed.accepted) };
+  }
+
+  @Get("me/community-consent")
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  async getCommunityConsent(@Req() req: any) {
+    return { success: true, data: await this.usersService.getCommunityConsent(req.user.id) };
+  }
+
   @Get("me/player-profile")
   @UseGuards(AuthGuard)
   @ApiBearerAuth()

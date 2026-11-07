@@ -4,8 +4,8 @@ import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 import { OrdersService } from "./orders.service";
 import { checkoutSchema, paginationSchema } from "@playmate/validation";
-import { AuthGuard } from "@/common/auth.guard";
-import { OrderStatus } from "@playmate/types";
+import { AuthGuard, RolesGuard } from "@/common/auth.guard";
+import { OrderStatus, UserRole } from "@playmate/types";
 
 export class CheckoutDto extends createZodDto(checkoutSchema) {}
 export class UpdateOrderStatusDto extends createZodDto(
@@ -34,8 +34,8 @@ export class OrdersController {
   @UseGuards(AuthGuard)
   @ApiOperation({ summary: "Get order details by ID" })
   @ApiParam({ name: "id", description: "Order UUID" })
-  async findOne(@Param("id") id: string) {
-    const data = await this.ordersService.findById(id);
+  async findOne(@Req() req: any, @Param("id") id: string) {
+    const data = await this.ordersService.findByIdForUser(id, req.user.id);
     return { success: true, data };
   }
 
@@ -43,8 +43,8 @@ export class OrdersController {
   @UseGuards(AuthGuard)
   @ApiOperation({ summary: "Get line items for an order" })
   @ApiParam({ name: "id", description: "Order UUID" })
-  async getItems(@Param("id") id: string) {
-    const data = await this.ordersService.getOrderItems(id);
+  async getItems(@Req() req: any, @Param("id") id: string) {
+    const data = await this.ordersService.getOrderItemsForUser(id, req.user.id);
     return { success: true, data };
   }
 
@@ -58,7 +58,7 @@ export class OrdersController {
   }
 
   @Patch(":id/status")
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, new RolesGuard([UserRole.ADMIN]))
   @ApiOperation({ summary: "Update order status" })
   @ApiParam({ name: "id", description: "Order UUID" })
   async updateStatus(@Param("id") id: string, @Body() body: UpdateOrderStatusDto) {

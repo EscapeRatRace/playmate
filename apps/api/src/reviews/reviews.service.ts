@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException, BadRequestException } from "@nes
 import { eq, and, desc, count, sql, lte } from "drizzle-orm";
 import { DRIZZLE_DB, type DrizzleDb } from "@/db/database.module";
 import { reviews, type NewReview } from "@/db/schema/reviews";
+import { users } from "@/db/schema/users";
 import { venues } from "@/db/schema/venues";
 import { products } from "@/db/schema/products";
 import { bookings } from "@/db/schema/bookings";
@@ -59,6 +60,8 @@ export class ReviewsService {
   }
 
   async create(userId: string, input: ReviewCreateInput) {
+    const [user] = await this.db.select({ version: users.communityTermsVersion }).from(users).where(eq(users.id, userId)).limit(1);
+    if (user?.version !== "2026-11-07") throw new BadRequestException("Please accept the current Playmate community guidelines before posting a review");
     if (!!input.venueId === !!input.productId) {
       throw new BadRequestException("Choose exactly one venue or product to review");
     }

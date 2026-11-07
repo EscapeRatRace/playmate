@@ -3,7 +3,7 @@ import Toast from 'react-native-toast-message';
 import storage from '@shared/services/storage';
 import type { ApiError } from '@playmate/types';
 
-const BASE_URL =
+export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 // NOTE: token persisted via storage service (SecureStore on native,
@@ -18,7 +18,7 @@ class ApiClient {
 
   constructor() {
     this.instance = axios.create({
-      baseURL: BASE_URL,
+      baseURL: API_BASE_URL,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ class ApiClient {
       this.refreshInFlight = (async () => {
         const refreshToken = await storage.getRefreshToken();
         if (!refreshToken) return null;
-        const response = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken }, { timeout: 30000 });
+        const response = await axios.post(`${API_BASE_URL.replace(/\/$/, '')}/auth/refresh`, { refreshToken }, { timeout: 30000 });
         const session = response.data?.data?.session;
         const accessToken = session?.access_token;
         if (!accessToken || !session?.refresh_token) return null;

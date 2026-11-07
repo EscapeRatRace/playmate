@@ -139,3 +139,9 @@ Resolve these before locking schemas and checkout behavior: launch city and init
 ## Suggested acceptance rule
 
 Mark a checklist row **Implemented** only after its mobile/partner/admin UX, validated API, persisted data/state transitions, authorization/privacy rules, error and empty states, and automated tests are all present. Update this audit as features land; a roadmap entry or placeholder screen is not completion.
+
+## Follow-up implementation notes — 2026-11-07
+
+Since this audit, the branch has added richer venue map/search filters and favorites, multi-slot bookings and cancellation previews, player profiles and privacy enforcement, player trust/ratings, Playpals, game invites/co-hosts/attendance, groups and group chat, moderation reports, venue slot overrides, and admin analytics. This does not close every row above; verify those features against the current code and running service before treating them as complete.
+
+The latest release-readiness pass also adds public privacy/community-guideline pages, recorded community-guideline acceptance before publishing profiles/games/reviews/group content, Play Store build artwork/version metadata, a product-to-cart-to-checkout mobile path, and owner-scoped order reads. Publisher-account setup, public production hosting, support contact, store listing, declarations, and production device testing remain release gates. See [Google Play readiness](google-play-readiness.md).
