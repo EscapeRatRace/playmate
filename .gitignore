@@ -35,4 +35,5 @@ ios/
 *.key
 *.mobileprovision
 *.orig.*
+apps/mobile/play-service-account-key.json
 

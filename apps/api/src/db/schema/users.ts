@@ -45,6 +45,8 @@ export const users = pgTable("users", {
   completedGames: integer("completed_games").default(0).notNull(),
   noShowCount: integer("no_show_count").default(0).notNull(),
   lateCancelCount: integer("late_cancel_count").default(0).notNull(),
+  communityTermsAcceptedAt: timestamp("community_terms_accepted_at", { withTimezone: true }),
+  communityTermsVersion: text("community_terms_version"),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
 });

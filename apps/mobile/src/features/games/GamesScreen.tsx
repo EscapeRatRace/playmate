@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Linking,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -14,7 +15,7 @@ import {
   View,
 } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@shared/services/api';
+import { API_BASE_URL, apiClient } from '@shared/services/api';
 import { useSports, useVenues } from '@features/venues';
 import { useTheme } from '@theme/index';
 import { Button, EmptyState, ErrorState, LoadingState } from '@components/ui';
@@ -80,6 +81,7 @@ export const GamesScreen: React.FC = () => {
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [instantJoin, setInstantJoin] = useState(false);
   const [privateGame, setPrivateGame] = useState(false);
+  const [communityTermsChecked, setCommunityTermsChecked] = useState(false);
 
   const dateOptions = useMemo(() => Array.from({ length: 7 }, (_, index) => {
     const date = new Date();
@@ -105,6 +107,13 @@ export const GamesScreen: React.FC = () => {
     queryKey: ['games', 'invites'],
     queryFn: () => apiClient.get<ApiEnvelope<Array<{ invite: { id: string }; game: Game }>>>('/games/invites').then((response) => response.data ?? []),
   });
+  const communityConsentQuery = useQuery({
+    queryKey: ['community-consent'],
+    queryFn: () => apiClient.get<ApiEnvelope<{ accepted: boolean }>>('/users/me/community-consent').then((response) => response.data),
+  });
+  useEffect(() => {
+    if (communityConsentQuery.data?.accepted) setCommunityTermsChecked(true);
+  }, [communityConsentQuery.data?.accepted]);
   const participantsQuery = useQuery({
     queryKey: ['games', requestsGame?.id, 'participants'],
     enabled: !!requestsGame,
@@ -128,7 +137,8 @@ export const GamesScreen: React.FC = () => {
   });
 
   const create = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
+      if (!communityTermsChecked) throw new Error('Please read and accept the community guidelines before posting a game.');
       const selectedSport = sportId || sports[0]?.id;
       if (!selectedSport) throw new Error('Choose a sport to continue.');
       if (title.trim().length < 3) throw new Error('Add a game name with at least 3 characters.');
@@ -139,6 +149,7 @@ export const GamesScreen: React.FC = () => {
       const startsAt = new Date(`${startDate}T${startTime}:00`);
       if (!Number.isFinite(startsAt.getTime()) || startsAt.getTime() <= Date.now()) throw new Error('Choose a start time in the future.');
       const endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000);
+      await apiClient.post('/users/me/community-consent', { accepted: true });
       return apiClient.post<ApiEnvelope<Game>>('/games', {
         sportId: selectedSport,
         venueId: venueId || null,
@@ -161,6 +172,7 @@ export const GamesScreen: React.FC = () => {
       setCost('0');
       setInstantJoin(false);
       setPrivateGame(false);
+      setCommunityTermsChecked(true);
       void queryClient.invalidateQueries({ queryKey: ['games'] });
       Alert.alert('Game posted', privateGame ? 'Your invite-only game is ready. Invite your Playpals from My games.' : 'Your game is now visible to nearby players. You can review join requests from My games.');
     },
@@ -382,7 +394,15 @@ export const GamesScreen: React.FC = () => {
             <Text style={styles.label}>Notes (optional)</Text>
             <TextInput style={[styles.field, { minHeight: 88, textAlignVertical: 'top' }]} placeholder="Skill level, what to bring, or other details" placeholderTextColor={colors.text.tertiary} value={notes} onChangeText={setNotes} maxLength={1000} multiline />
 
-            <Button title={privateGame ? 'Create invite-only game' : 'Post public game'} onPress={() => create.mutate()} loading={create.isPending} disabled={create.isPending || sports.length === 0} />
+            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: communityTermsChecked }} onPress={() => setCommunityTermsChecked((current) => !current)} style={[styles.row, { alignItems: 'flex-start', paddingVertical: spacing.sm }]}>
+              <Text style={[styles.label, { marginTop: 0, fontSize: 22 }]}>{communityTermsChecked ? '☑' : '□'}</Text>
+              <Text style={[styles.hint, { flex: 1, fontSize: 14 }]}>I agree to follow Playmate’s community guidelines. I won’t post abusive, hateful, threatening, misleading, or illegal content, and I’ll respect other players.</Text>
+            </Pressable>
+            <Pressable accessibilityRole="link" onPress={() => { void Linking.openURL(`${API_BASE_URL.replace(/\/$/, '')}/legal/community-guidelines`); }}>
+              <Text style={[styles.hint, { color: colors.primary[700], textDecorationLine: 'underline' }]}>Read the full community guidelines</Text>
+            </Pressable>
+
+            <Button title={privateGame ? 'Create invite-only game' : 'Post public game'} onPress={() => create.mutate()} loading={create.isPending} disabled={create.isPending || sports.length === 0 || !communityTermsChecked} />
             <Button title="Cancel" variant="outline" onPress={() => setShowHost(false)} />
           </ScrollView>
         </KeyboardAvoidingView>

@@ -12,6 +12,8 @@ const mockRemove = jest.fn();
 const mockGetMyProfile = jest.fn();
 const mockUpdateMyProfile = jest.fn();
 const mockPublicProfile = jest.fn();
+const mockAcceptCommunityTerms = jest.fn();
+const mockGetCommunityConsent = jest.fn();
 
 jest.mock("@/users/users.service", () => ({
   UsersService: jest.fn().mockImplementation(() => ({
@@ -22,6 +24,8 @@ jest.mock("@/users/users.service", () => ({
     getMyProfile: mockGetMyProfile,
     updateMyProfile: mockUpdateMyProfile,
     publicProfile: mockPublicProfile,
+    acceptCommunityTerms: mockAcceptCommunityTerms,
+    getCommunityConsent: mockGetCommunityConsent,
   })),
 }));
 
@@ -48,6 +52,33 @@ describe("Users routes (e2e)", () => {
     expect(response.status).toBe(200);
     expect(response.text).toContain("Delete your Playmate account");
     expect(response.text).toContain("/users/me");
+  });
+
+  it("serves Playmate privacy and community guideline pages", async () => {
+    const privacy = await request(app.getHttpServer()).get("/legal/privacy-policy");
+    const guidelines = await request(app.getHttpServer()).get("/legal/community-guidelines");
+    expect(privacy.status).toBe(200);
+    expect(privacy.text).toContain("Playmate Privacy Policy");
+    expect(privacy.text).toContain("Delete your Playmate account");
+    expect(guidelines.status).toBe(200);
+    expect(guidelines.text).toContain("Playmate Community Guidelines");
+    expect(guidelines.text).toContain("report and block");
+  });
+
+  it("records explicit community-guideline acceptance for the signed-in user", async () => {
+    mockAcceptCommunityTerms.mockResolvedValue({ communityTermsVersion: "2026-11-07" });
+    mockGetCommunityConsent.mockResolvedValue({ accepted: true, currentVersion: "2026-11-07" });
+    const accepted = await request(app.getHttpServer()).post("/users/me/community-consent").set(authBearer(VALID_USER)).send({ accepted: true });
+    const consent = await request(app.getHttpServer()).get("/users/me/community-consent").set(authBearer(VALID_USER));
+    expect(accepted.status).toBe(201);
+    expect(mockAcceptCommunityTerms).toHaveBeenCalledWith(VALID_USER.id, true);
+    expect(consent.body.data.accepted).toBe(true);
+  });
+
+  it("rejects community-guideline acceptance without an explicit affirmative value", async () => {
+    const response = await request(app.getHttpServer()).post("/users/me/community-consent").set(authBearer(VALID_USER)).send({ accepted: false });
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(mockAcceptCommunityTerms).not.toHaveBeenCalled();
   });
 
   it("returns and updates the authenticated player's extended profile", async () => {

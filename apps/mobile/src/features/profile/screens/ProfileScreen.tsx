@@ -1,11 +1,11 @@
 import React from 'react';
-import { Alert, View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Alert, Linking, View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '@theme/index';
 import { Badge, Button, Card } from '@components/ui';
 import { useAuthStore } from '@store/auth.store';
 import { roleBadgeVariant, roleLabel } from '@utils/index';
 import { UserRole } from '@playmate/types';
-import apiClient from '@shared/services/api';
+import apiClient, { API_BASE_URL } from '@shared/services/api';
 import { useNavigation } from '@react-navigation/native';
 
 const ROLE_BLURB: Record<string, string> = {
@@ -79,6 +79,9 @@ export const ProfileScreen: React.FC = () => {
       </Card>
 
       <Button title="Edit player profile and privacy" variant="outline" size="lg" fullWidth onPress={() => navigation.navigate('EditProfile')} />
+      <Button title="My orders" variant="outline" size="lg" fullWidth style={{ marginTop: spacing.sm }} onPress={() => navigation.navigate('Orders')} />
+      <Button title="Privacy policy" variant="outline" size="lg" fullWidth style={{ marginTop: spacing.sm }} onPress={() => { void Linking.openURL(`${API_BASE_URL.replace(/\/$/, '')}/legal/privacy-policy`); }} />
+      <Button title="Community guidelines" variant="outline" size="lg" fullWidth style={{ marginTop: spacing.sm }} onPress={() => { void Linking.openURL(`${API_BASE_URL.replace(/\/$/, '')}/legal/community-guidelines`); }} />
 
       <Button
         title="Sign out"

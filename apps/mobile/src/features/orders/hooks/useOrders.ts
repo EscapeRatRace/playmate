@@ -23,7 +23,7 @@ export function useOrders(
   return useQuery<PaginatedResponse<Order>>({
     queryKey: ORDER_KEYS.list(filters),
     queryFn: async () => {
-      const res = await apiClient.get<ApiResponse<PaginatedResponse<Order>>>('/orders', {
+      const res = await apiClient.get<ApiResponse<PaginatedResponse<Order>>>('/orders/my', {
         params: filters,
       });
       return res.data ?? { items: [], total: 0, page: 1, perPage: 20, totalPages: 0 };

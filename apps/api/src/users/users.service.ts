@@ -12,6 +12,8 @@ import { gameParticipants, gameRatings, games } from "@/db/schema/games";
 
 @Injectable()
 export class UsersService {
+  static readonly COMMUNITY_TERMS_VERSION = "2026-11-07";
+
   constructor(
     @Inject(DRIZZLE_DB) private readonly db: DrizzleDb,
     private readonly supabase: SupabaseService,
@@ -116,6 +118,9 @@ export class UsersService {
   }
 
   async updateMyProfile(id: string, patch: Record<string, unknown>) {
+    if ((typeof patch.bio === "string" && patch.bio.trim()) || (typeof patch.avatarUrl === "string" && patch.avatarUrl.trim())) {
+      await this.requireCommunityTermsAccepted(id);
+    }
     const existing = await this.findById(id);
     const profile = existing.profile && typeof existing.profile === "object" ? existing.profile as Record<string, unknown> : {};
     const homeLocation = (patch.homeLocation && typeof patch.homeLocation === "object" ? patch.homeLocation : undefined) as { city?: string; area?: string } | undefined;
@@ -153,6 +158,31 @@ export class UsersService {
     }).where(eq(users.id, id)).returning();
     if (!updated) throw new NotFoundException("Profile not found");
     return this.getMyProfile(id);
+  }
+
+  async acceptCommunityTerms(id: string, accepted: true) {
+    if (!accepted) throw new BadRequestException("You must accept the community guidelines to continue");
+    const [updated] = await this.db.update(users).set({
+      communityTermsAcceptedAt: new Date(),
+      communityTermsVersion: UsersService.COMMUNITY_TERMS_VERSION,
+      updatedAt: new Date(),
+    }).where(eq(users.id, id)).returning({ id: users.id, communityTermsAcceptedAt: users.communityTermsAcceptedAt, communityTermsVersion: users.communityTermsVersion });
+    if (!updated) throw new NotFoundException("User not found");
+    return updated;
+  }
+
+  async getCommunityConsent(id: string) {
+    const [user] = await this.db.select({ version: users.communityTermsVersion, acceptedAt: users.communityTermsAcceptedAt })
+      .from(users).where(eq(users.id, id)).limit(1);
+    if (!user) throw new NotFoundException("User not found");
+    return { accepted: user.version === UsersService.COMMUNITY_TERMS_VERSION, version: user.version, currentVersion: UsersService.COMMUNITY_TERMS_VERSION, acceptedAt: user.acceptedAt };
+  }
+
+  async requireCommunityTermsAccepted(id: string) {
+    const [user] = await this.db.select({ version: users.communityTermsVersion }).from(users).where(eq(users.id, id)).limit(1);
+    if (user?.version !== UsersService.COMMUNITY_TERMS_VERSION) {
+      throw new BadRequestException("Please accept the current Playmate community guidelines before posting or messaging");
+    }
   }
 
   async publicProfile(id: string, viewerId?: string) {
@@ -349,6 +379,7 @@ export class UsersService {
   }
 
   async createGroup(userId: string, input: { name: string; rules?: string; photoUrl?: string }) {
+    await this.requireCommunityTermsAccepted(userId);
     return this.db.transaction(async (tx) => {
       const [group] = await tx.insert(playerGroups).values({ name: input.name.trim(), rules: input.rules?.trim() || null, photoUrl: input.photoUrl ?? null, createdBy: userId }).returning();
       if (!group) throw new BadRequestException("Could not create group");
@@ -375,6 +406,7 @@ export class UsersService {
   }
 
   async sendGroupMessage(userId: string, groupId: string, body: string) {
+    await this.requireCommunityTermsAccepted(userId);
     const membership = await this.requireGroupMember(userId, groupId);
     if (membership.isMuted) throw new BadRequestException("You are muted in this group");
     const [created] = await this.db.insert(groupMessages).values({ groupId, senderId: userId, body: body.trim() }).returning();
@@ -424,6 +456,8 @@ export class UsersService {
       profileVisibility: "PRIVATE",
       gamesVisibility: "PRIVATE",
       calendarVisibility: "PRIVATE",
+      communityTermsAcceptedAt: null,
+      communityTermsVersion: null,
       updatedAt: new Date(),
     }).where(eq(users.id, id)).returning();
     if (!anonymized) throw new BadRequestException("The account was removed but its profile could not be anonymized");

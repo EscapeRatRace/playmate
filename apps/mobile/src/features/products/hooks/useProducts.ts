@@ -75,7 +75,7 @@ export function useProductVariants(
     queryKey: PRODUCT_KEYS.variants(productId),
     queryFn: async () => {
       const res = await apiClient.get<ApiResponse<ProductVariant[]>>(
-        `/product-variants/product/${productId}`
+        `/products/${productId}/variants`
       );
       return res.data ?? [];
     },

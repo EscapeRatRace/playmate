@@ -30,6 +30,7 @@ export type ShopStackParamList = {
   Checkout: undefined;
   OrderSuccess: { orderId: string };
   OrderDetail: { orderId: string };
+  Orders: undefined;
 };
 
 export type BookingsStackParamList = {

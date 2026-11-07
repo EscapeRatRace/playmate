@@ -39,6 +39,7 @@ export class GamesService {
   }
 
   async create(hostId: string, input: GameCreateInput) {
+    await this.usersService.requireCommunityTermsAccepted(hostId);
     if (new Date(input.endsAt) <= new Date(input.startsAt)) throw new BadRequestException("Game end must be after it starts");
     const [game] = await this.db.insert(games).values({ ...input, hostId, startsAt: new Date(input.startsAt), endsAt: new Date(input.endsAt) }).returning();
     if (!game) throw new BadRequestException("Could not create game");
@@ -47,6 +48,7 @@ export class GamesService {
   }
 
   async createInvite(inviterId: string, gameId: string, inviteeId: string, message?: string | null) {
+    await this.usersService.requireCommunityTermsAccepted(inviterId);
     if (inviterId === inviteeId) throw new BadRequestException("You cannot invite yourself");
     return this.db.transaction(async (tx) => {
       const [game] = await tx.select().from(games).where(eq(games.id, gameId)).for("update").limit(1);
@@ -119,6 +121,7 @@ export class GamesService {
   }
 
   async join(gameId: string, userId: string, message?: string) {
+    if (message?.trim()) await this.usersService.requireCommunityTermsAccepted(userId);
     return this.db.transaction(async (tx) => {
       const [game] = await tx.select().from(games).where(eq(games.id, gameId)).for("update").limit(1);
       if (!game || (game.status !== "OPEN" && game.status !== "FULL")) throw new NotFoundException("This game is no longer open to join");

@@ -44,6 +44,12 @@ export class OrdersService {
     return item;
   }
 
+  async findByIdForUser(id: string, userId: string) {
+    const [item] = await this.db.select().from(orders).where(and(eq(orders.id, id), eq(orders.userId, userId))).limit(1);
+    if (!item) throw new NotFoundException("Order not found");
+    return item;
+  }
+
   async getOrderItems(orderId: string) {
     return this.db
       .select({
@@ -55,6 +61,11 @@ export class OrdersService {
       .where(eq(orderItems.orderId, orderId))
       .innerJoin(productVariants, eq(productVariants.id, orderItems.variantId))
       .innerJoin(products, eq(products.id, productVariants.productId));
+  }
+
+  async getOrderItemsForUser(orderId: string, userId: string) {
+    await this.findByIdForUser(orderId, userId);
+    return this.getOrderItems(orderId);
   }
 
   async checkout(userId: string, input: CheckoutInput) {
@@ -117,6 +128,7 @@ export class OrdersService {
           billingAddress: input.billingAddress as any,
         } satisfies NewOrder)
         .returning();
+      if (!order) throw new BadRequestException("Could not create order");
 
       const orderItemValues: NewOrderItem[] = items.map((item) => ({
         orderId: order.id,
